@@ -3,11 +3,21 @@
 #include "tmath.h"
 #include <math.h>
 #include <time.h>
+#include "mtwister.h"
 #define pi 3.14159
 #define inf 1e9
 
+MTRand rval;
+
+void initRandrand(){
+    time_t t;
+    rval = seedRand((unsigned) time(&t));
+   // srand((unsigned) time(&t));
+}
+
 double drand(){
-    return ((double) rand())/RAND_MAX;
+    //return ((double) rand())/RAND_MAX;
+    return genRand(&rval);
 }
 
 struct vector isotropicDirection(){
@@ -131,10 +141,7 @@ double intersect_cylinder_out(struct vector position,struct vector direction,dou
     return dist;
 }
 
-void initRandrand(){
-    time_t t;
-    srand((unsigned) time(&t));
-}
+
 
 /*int main(){
     initRandrand();

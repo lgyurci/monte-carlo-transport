@@ -1,5 +1,6 @@
 #include <math.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 struct vector{
     double x,y,z;
@@ -89,4 +90,8 @@ double dotProduct(struct vector v1, struct vector v2){ //skaláris szorzat
 bool isSuspiciousV(struct vector v){ //inf vagy hasonló érték szerepel-e a vektorban (csak debug)
     if ((v.x == v.x)&&(v.y == v.y)&&(v.z == v.z)) return false;
     return true;
+}
+
+void printVector(struct vector v){
+    printf("%f\t%f\t%f\n",v.x,v.y,v.z);
 }
