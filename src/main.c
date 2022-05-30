@@ -3,11 +3,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
+#include "reactions.h"
 #define inf 1e9
 #define channels 1024
 
 int main(){
     initRandrand();
+    initReactions();
     int ch[channels] = { 0 };
     int particleNum = 1e5;
 
@@ -30,9 +32,9 @@ int main(){
             double lastPoint = intersect_cylinder_in(pos,direction,pztop,pzbottom,radius);
             pos = transloc(pos,vMult(direction,lastPoint));
 
-
         }
     }
+    freeReactions();
     return 0;
 }
 
