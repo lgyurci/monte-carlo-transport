@@ -9,6 +9,7 @@ double getCrossection(double energy,int effect); //effect: 1 - compton scatterin
 double shuffle_freeway_length(double energy);
 int shuffle_reaction(double energy);
 void freeReactions();
+struct vector comptonScatter(struct vector direction,double *energy);
 
 
 #endif

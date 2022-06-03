@@ -30,6 +30,35 @@ struct vector isotropicDirection(){
     return direction;
 }
 
+struct vector isotropicScatter(struct vector direction,double cosangle){
+    double fi = drand()*2*pi;
+    double s = sqrt(direction.x*direction.x+direction.y*direction.y);
+    double x11 = direction.y/s;
+    double x12 = direction.x*direction.z/s;
+    double x13 = direction.x;
+    double x21 = -1*direction.x/s;
+    double x22 = direction.y*direction.z/s;
+    double x23 = direction.y;
+    double x31 = 0;
+    double x32 = -1*s;
+    double x33 = direction.z;
+    double st = sqrt(1-cosangle*cosangle);
+    double sf = sin(fi);
+    double cf = cos(fi);
+    double ct = cosangle;
+    double v1 = st*cf;
+    double v2 = st*sf;
+    double v3 = ct;
+    double nx = x11*v1+x12*v2+x13*v3;
+    double ny = x21*v1+x22*v2+x23*v3;
+    double nz = x32*v2+x33*v3;
+    struct vector ret;
+    ret.x = nx;
+    ret.y = ny;
+    ret.z = nz;
+    return ret;
+}
+
 double intersect_plane(struct vector position, struct vector direction, double planeZ){
     double dist = 0;
     if (vAbs(direction) < 1e-3) {

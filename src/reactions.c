@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "transport.h"
+#include "tmath.h"
 
 double **xcom;
 int x;
@@ -86,6 +87,7 @@ void initReactions(){
 }
 
 double getCrossection(double energy,int effect){ //effect: 1 - compton scattering, 2 - photoelectric effect, 3 - pair production in nucleus, 4 - pair production in electron bands
+    if (energy <= xcom[0][0]) return 0;
     int i;
     energy = energy/1000;
     for (i = 0; i < y && energy > xcom[0][i]; i++);
@@ -124,6 +126,43 @@ void freeReactions(){
         free(xcom[i]);
     }
     free(xcom);
+}
+
+struct vector comptonScatter(struct vector direction,double *energy){
+
+    double lambda = 511/(*energy);
+
+    double R = 0;
+    double X = 0;
+    int foundx = 0;
+
+    while (foundx == 0){
+        double r1 = drand();
+        double r2 = drand();
+        double r3 = drand();
+        if (r1 <= (1+2/lambda)/(9+2/lambda)){
+            R = 1+2*r2/lambda;
+            if (r3 <= 4*(1/R-1/(R*R))){
+                X = R;
+                foundx = 1;
+            }
+        } else {
+            R = (1+2/lambda)/(1+2*r2/lambda);
+            double a = lambda-R*lambda+1;
+            if (r3<=0.5*(a*a+1/R)){
+                X = R;
+                foundx = 1;
+            }
+        }
+    }
+
+    double E2 = 511/(X*lambda);
+
+    double costheta = 1+lambda-lambda*X;
+
+    struct vector ret = isotropicScatter(direction,costheta);
+    *energy = E2;
+    return ret;
 }
 /*
 

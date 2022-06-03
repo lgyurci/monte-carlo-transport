@@ -12,5 +12,6 @@ struct vector intersect_cylinder(struct vector position, struct vector direction
 double intersect_cylinder_in(struct vector position,struct vector direction,double pztop,double pzbottom,double radius);
 double intersect_cylinder_out(struct vector position,struct vector direction,double pztop,double pzbottom,double radius);
 void initRandrand();
+struct vector isotropicScatter(struct vector direction,double angle);
 
 #endif
