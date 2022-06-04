@@ -20,6 +20,14 @@ double drand(){
     return genRand(&rval);
 }
 
+double drandn(){
+    double sum = 0;
+    for (int i = 0; i < 12; i++){
+        sum += drand()-0.5;
+    }
+    return sum;
+}
+
 struct vector isotropicDirection(){
     struct vector direction;
     direction.z = drand()*2-1;
@@ -57,6 +65,11 @@ struct vector isotropicScatter(struct vector direction,double cosangle){
     ret.y = ny;
     ret.z = nz;
     return ret;
+}
+
+struct vector coneDirection(double cosalpha,struct vector direction){
+    double u = cosalpha + (1-cosalpha)*drand();
+    return isotropicScatter(direction,u);
 }
 
 double intersect_plane(struct vector position, struct vector direction, double planeZ){

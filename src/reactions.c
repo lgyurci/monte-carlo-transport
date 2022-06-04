@@ -86,8 +86,15 @@ void initReactions(){
     }
 }
 
-double getCrossection(double energy,int effect){ //effect: 1 - compton scattering, 2 - photoelectric effect, 3 - pair production in nucleus, 4 - pair production in electron bands
+double getCrossection(double energy,int effect){ //effect: 0 - sum, 1 - compton scattering, 2 - photoelectric effect, 3 - pair production in nucleus, 4 - pair production in electron bands
     if (energy <= xcom[0][0]) return 0;
+    if (effect == 0){
+        double sum = 0;
+        for (int i = 1; i < x; i++){
+            sum += getCrossection(energy,i);
+        }
+        return sum;
+    }
     int i;
     energy = energy/1000;
     for (i = 0; i < y && energy > xcom[0][i]; i++);
@@ -100,15 +107,11 @@ double getCrossection(double energy,int effect){ //effect: 1 - compton scatterin
 }
 
 double shuffle_freeway_length(double energy){
-    double sumcross = 0;
-    for (int i = 1; i < x; i++){
-        sumcross += getCrossection(energy,i);
-    }
-    double lambda = -1*log(drand())/sumcross;
+    double lambda = -1*log(drand())/getCrossection(energy,0);
     return lambda;
 }
 
-int shuffle_reaction(double energy){
+/*int shuffle_reaction(double energy){
     double min = -1*log(drand())/getCrossection(energy,1);
     int mini = 1;
     for (int i = 2; i < x;i++){
@@ -119,6 +122,19 @@ int shuffle_reaction(double energy){
         }
     }
     return mini;
+}*/
+
+int shuffle_reaction(double energy){
+    double total = getCrossection(energy,0);
+    double r = drand()*total;
+    double s = getCrossection(energy,1);
+    for (int i = 1; i <= 4; i++){
+        if (r <= s){
+            return i;
+        }
+        if (i >= 4) return -1;
+        s += getCrossection(energy,i+1);
+    }
 }
 
 void freeReactions(){
