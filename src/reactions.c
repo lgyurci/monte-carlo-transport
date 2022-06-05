@@ -2,12 +2,15 @@
 #include <stdlib.h>
 #include "transport.h"
 #include "tmath.h"
+#include "mtwister.h"
 
 double **xcom;
 int x;
 int y;
+double ro;
 
-void initReactions(){
+void initReactions(double roo){
+    ro = roo;
     FILE *f;
 
     f = fopen("../data.pl","r");
@@ -103,11 +106,11 @@ double getCrossection(double energy,int effect){ //effect: 0 - sum, 1 - compton 
     double crossection_low = xcom[effect][i-1];
     double crossection_high = xcom[effect][i];
     double crossection = ((energy - energy_low)/(energy_high - energy_low))*(crossection_high - crossection_low) + crossection_low;
-    return crossection;
+    return crossection*ro;
 }
 
-double shuffle_freeway_length(double energy){
-    double lambda = -1*log(drand())/getCrossection(energy,0);
+double shuffle_freeway_length(double energy,MTRand *random){
+    double lambda = -1*log(drandt(random))/getCrossection(energy,0);
     return lambda;
 }
 
@@ -124,9 +127,9 @@ double shuffle_freeway_length(double energy){
     return mini;
 }*/
 
-int shuffle_reaction(double energy){
+int shuffle_reaction(double energy,MTRand *random){
     double total = getCrossection(energy,0);
-    double r = drand()*total;
+    double r = drandt(random)*total;
     double s = getCrossection(energy,1);
     for (int i = 1; i <= 4; i++){
         if (r <= s){
@@ -144,7 +147,7 @@ void freeReactions(){
     free(xcom);
 }
 
-struct vector comptonScatter(struct vector direction,double *energy){
+struct vector comptonScatter(struct vector direction,double *energy,MTRand *random){
 
     double lambda = 511/(*energy);
 
@@ -153,9 +156,9 @@ struct vector comptonScatter(struct vector direction,double *energy){
     int foundx = 0;
 
     while (foundx == 0){
-        double r1 = drand();
-        double r2 = drand();
-        double r3 = drand();
+        double r1 = drandt(random);
+        double r2 = drandt(random);
+        double r3 = drandt(random);
         if (r1 <= (1+2/lambda)/(9+2/lambda)){
             R = 1+2*r2/lambda;
             if (r3 <= 4*(1/R-1/(R*R))){
@@ -176,7 +179,7 @@ struct vector comptonScatter(struct vector direction,double *energy){
 
     double costheta = 1+lambda-lambda*X;
 
-    struct vector ret = isotropicScatter(direction,costheta);
+    struct vector ret = isotropicScatter(direction,costheta,random);
     *energy = E2;
     return ret;
 }

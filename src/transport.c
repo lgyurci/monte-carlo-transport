@@ -7,39 +7,61 @@
 #define pi 3.14159
 #define inf 1e9
 
-MTRand rval;
+/*MTRand rval;
 
 void initRandrand(){
     time_t t;
     rval = seedRand((unsigned) time(&t));
    // srand((unsigned) time(&t));
+}*/
+
+MTRand initRandrandt(){
+    time_t t;
+    MTRand random = seedRand((unsigned) time(&t));
+    return random;
 }
 
-double drand(){
+MTRand initRandt(long seed){
+    return seedRand(seed);
+}
+
+/*double drand(){
     //return ((double) rand())/RAND_MAX;
     return genRand(&rval);
+}*/
+
+double drandt(MTRand *random){
+    return genRand(random);
 }
 
-double drandn(){
+double drandnt(MTRand *random){
+    double sum = 0;
+    for (int i = 0; i < 12; i++){
+        sum += drandt(random)-0.5;
+    }
+    return sum;
+}
+
+/*double drandn(){
     double sum = 0;
     for (int i = 0; i < 12; i++){
         sum += drand()-0.5;
     }
     return sum;
-}
+}*/
 
-struct vector isotropicDirection(){
+struct vector isotropicDirection(MTRand *random){
     struct vector direction;
-    direction.z = drand()*2-1;
-    double fi = 2*pi*drand();
+    direction.z = drandt(random)*2-1;
+    double fi = 2*pi*drandt(random);
     double r = sqrt(1-direction.z*direction.z);
     direction.x = r*cos(fi);
     direction.y = r*sin(fi);
     return direction;
 }
 
-struct vector isotropicScatter(struct vector direction,double cosangle){
-    double fi = drand()*2*pi;
+struct vector isotropicScatter(struct vector direction,double cosangle,MTRand *random){
+    double fi = drandt(random)*2*pi;
     double s = sqrt(direction.x*direction.x+direction.y*direction.y);
     double x11 = direction.y/s;
     double x12 = direction.x*direction.z/s;
@@ -67,9 +89,9 @@ struct vector isotropicScatter(struct vector direction,double cosangle){
     return ret;
 }
 
-struct vector coneDirection(double cosalpha,struct vector direction){
-    double u = cosalpha + (1-cosalpha)*drand();
-    return isotropicScatter(direction,u);
+struct vector coneDirection(double cosalpha,struct vector direction,MTRand *random){
+    double u = cosalpha + (1-cosalpha)*drandt(random);
+    return isotropicScatter(direction,u,random);
 }
 
 double intersect_plane(struct vector position, struct vector direction, double planeZ){
