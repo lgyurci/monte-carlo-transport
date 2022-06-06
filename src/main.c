@@ -15,7 +15,7 @@ double pztop = 2;
 double pzbottom = -2;
 double radius = 2;
 
-double maxenergy = 4100;
+//double maxenergy = 4100;
 
 struct tracingThreadArgs{
     MTRand *random;
@@ -26,6 +26,9 @@ struct tracingThreadArgs{
     double sigma;
     struct vector sourcePos;
     int particlesTraced;
+    int detectorParticles;
+    double sumEnergy;
+    double maxEnergy;
 };
 
 //double ro = 3.67;
@@ -89,12 +92,14 @@ void *tracingThread(void* arg){
         struct vector direction = coneDirection(targs->cosalpha,vMult(targs->sourcePos,-1),targs->random);
         double firstPoint = intersect_cylinder_out(targs->sourcePos,direction,pztop,pzbottom,radius);
         if (firstPoint < inf){
+            targs->detectorParticles++;
             double energyAbsorbed = traceParticle(transloc(targs->sourcePos,vMult(direction,firstPoint)),direction,targs->sourceEnergy,targs->random);
+            targs->sumEnergy += energyAbsorbed;
             if (energyAbsorbed > 0) {
                 colledParticles++;
                 energyAbsorbed = energyAbsorbed + targs->sigma*drandnt(targs->random);
-                if (maxenergy < energyAbsorbed) energyAbsorbed = maxenergy;
-                (targs->chan)[((int)(energyAbsorbed*(channels-1)/maxenergy))]++;
+                if (targs->maxEnergy < energyAbsorbed) energyAbsorbed = targs->maxEnergy;
+                (targs->chan)[((int)(energyAbsorbed*(channels-1)/(targs->maxEnergy)))]++;
             }
         }
     }
@@ -112,10 +117,14 @@ int main(){
     double fwhm = 30;
     double sigma = fwhm/2.355;
 
+    double maxenergy = sourceEnergy+sigma*7;
+    double energyPerChannel = maxenergy/channels;
+
     MTRand mainrand = initRandrandt();
 
     FILE* gp_pipe = popen ("gnuplot -persistent", "w");
-    fprintf(gp_pipe,"set title 'Spectrum'\n");
+ //   fprintf(gp_pipe,"set title 'Spectrum'\n");
+    fprintf(gp_pipe,"set tmargin 4\n");
     fprintf(gp_pipe,"set logscale y\n");
 
     struct vector sourcePos;
@@ -125,6 +134,8 @@ int main(){
 
     double sinalpha = sqrt(radius*radius+(pztop-pzbottom)*(pztop-pzbottom))/vAbs(sourcePos);
     double cosalpha = sqrt(1-sinalpha*sinalpha);
+    double ang = 2*pi*(1-cosalpha);
+    double particleMultiplier = 4*pi/ang;
 
     int *sumTChannels = malloc(sizeof(int)*channels);
   /*  for (int i = 0; i < channels; i++){
@@ -156,11 +167,16 @@ int main(){
         targs[i].sigma = sigma;
         targs[i].sourcePos = sourcePos;
         targs[i].particlesTraced = 0;
+        targs[i].detectorParticles = 0;
+        targs[i].sumEnergy = 0;
+        targs[i].maxEnergy = maxenergy;
         pthread_create(&(threads[i]),NULL,tracingThread,&(targs[i]));
     }
 
     int sumcoll = 0;
     int sumpart = 0;
+    int sumdet = 0;
+    double sumEnergy = 0;
 
     for (int i = 0; i < particleNum/update; i++){
 
@@ -170,6 +186,8 @@ int main(){
 
         for (int j = 0; j < threadCount; j++){
             sumpart += targs[j].particlesTraced;
+            sumdet += targs[j].detectorParticles;
+            sumEnergy += targs[j].sumEnergy;
         }
 
         for (int j = 0; j < channels; j++){
@@ -189,9 +207,13 @@ int main(){
 
   //      printf ("Average speed: %f kp/s\n",sumcoll/1e3/((double)(ct.tv_sec * (int)1e6 + ct.tv_usec - peTi)/1e6));
   //      printf ("Total collisions: %d\n",sumcoll);
-        fprintf(gp_pipe,"set label 1 'Average speed: %.1f kp/s' at screen 0.05,screen 0.98 \n",sumcoll/1e3/((double)(ct.tv_sec * (int)1e6 + ct.tv_usec - peTi)/1e6));
-        fprintf(gp_pipe,"set label 2 'Total number of hits: %.3f M' at screen 0.95,screen 0.98 right\n",sumcoll/1e6);
-        fprintf(gp_pipe,"set label 3 'Total particles traced: %.3f M' at screen 0.05,screen 0.95 \n",(double) sumpart/1e6);
+        fprintf(gp_pipe,"set label 1 'Average detected particle speed: %.1f kp/s' at screen 0.5,screen 0.99 center\n",sumcoll/1e3/((double)(ct.tv_sec * (int)1e6 + ct.tv_usec - peTi)/1e6));
+        fprintf(gp_pipe,"set label 2 'Total number of hits: %.3f Mp' at screen 0.05,screen 0.99\n",sumcoll/1e6);
+        fprintf(gp_pipe,"set label 3 'Total particles traced: %.3f Mp' at screen 0.05,screen 0.96 \n",(double) sumpart/1e6);
+        fprintf(gp_pipe,"set label 4 'Max efficiency: %.5f' at screen 0.95, screen 0.99 right\n",sumEnergy/(sumdet*sourceEnergy));
+        fprintf(gp_pipe,"set label 5 'Total efficiency: %.5f' at screen 0.95, screen 0.96 right\n",sumEnergy/(sumpart*particleMultiplier*sourceEnergy));
+        fprintf(gp_pipe,"set label 6 'Average particle speed: %.2f Mp/s' at screen 0.5, screen 0.96 center\n",sumpart/1e6/((double)(ct.tv_sec * (int)1e6 + ct.tv_usec - peTi)/1e6));
+        fprintf(gp_pipe,"set label 7 'Average source activity: %.2f MBq' at screen 0.05, screen 0.93 left\n",(sumpart*particleMultiplier)/1e6/((double)(ct.tv_sec * (int)1e6 + ct.tv_usec - peTi)/1e6));
        // fprintf(gp_pipe,"set label 4 'Total number of hits: %.3f M' at screen 0.95,screen 0.98 right\n",sumcoll/1e6);
 //        fprintf(gp_pipe,"set logscale y\n");
 
@@ -199,6 +221,8 @@ int main(){
 
         sumcoll = 0;
         sumpart = 0;
+        sumdet = 0;
+        sumEnergy = 0;
 
     }
 
