@@ -15,8 +15,6 @@ double pztop = 2;
 double pzbottom = -2;
 double radius = 2;
 
-//double maxenergy = 4100;
-
 struct tracingThreadArgs{
     MTRand *random;
     int *chan;
@@ -31,7 +29,6 @@ struct tracingThreadArgs{
     double maxEnergy;
 };
 
-//double ro = 3.67;
 
 double traceParticle(struct vector pos, struct vector direction, double particle_energy, MTRand *random){ //returns: absorbed energy by the crystal
     int particle_is_alive = 1;
@@ -59,7 +56,6 @@ double traceParticle(struct vector pos, struct vector direction, double particle
                 struct vector annihil2 = vMult(annihil1,-1);
                 eenergy += traceParticle(pos,annihil1,511,random);
                 eenergy += traceParticle(pos,annihil2,511,random);
-              //  printf("%f\n",sumen);
             }
 
             sumen += eenergy;
@@ -76,7 +72,6 @@ void plot(FILE *gp_pipe,int *chan, int chansize){
     fprintf(gp_pipe,"plot '-'\n");
     for (int i = 0; i < chansize; i++){
         fprintf(gp_pipe,"%d %d\n",i,chan[i]);
-        //printf("%d %f\n",i,ch[i]);
     }
     fprintf(gp_pipe,"e\n");
 }
@@ -107,7 +102,7 @@ void *tracingThread(void* arg){
 }
 
 int main(){
-  //  initRandrand();
+
     double roh = 3.67;
     initReactions(roh);
 
@@ -123,7 +118,7 @@ int main(){
     MTRand mainrand = initRandrandt();
 
     FILE* gp_pipe = popen ("gnuplot -persistent", "w");
- //   fprintf(gp_pipe,"set title 'Spectrum'\n");
+
     fprintf(gp_pipe,"set tmargin 4\n");
     fprintf(gp_pipe,"set logscale y\n");
 
@@ -138,9 +133,6 @@ int main(){
     double particleMultiplier = 4*pi/ang;
 
     int *sumTChannels = malloc(sizeof(int)*channels);
-  /*  for (int i = 0; i < channels; i++){
-        sumTChannels[i] = 0;
-    }*/
 
     int threadCount = 4;
 
@@ -201,12 +193,10 @@ int main(){
             pthread_create(&(threads[j]),NULL,tracingThread,&(targs[j]));
         }
 
-        //Minden más kód ide jön!!!!
+        //Everything else comes here!!!! The threads are already running, so a little heavier code won't have a (big) impact on the simulation
 
         gettimeofday(&ct,NULL);
 
-  //      printf ("Average speed: %f kp/s\n",sumcoll/1e3/((double)(ct.tv_sec * (int)1e6 + ct.tv_usec - peTi)/1e6));
-  //      printf ("Total collisions: %d\n",sumcoll);
         fprintf(gp_pipe,"set label 1 'Average detected particle speed: %.1f kp/s' at screen 0.5,screen 0.99 center\n",sumcoll/1e3/((double)(ct.tv_sec * (int)1e6 + ct.tv_usec - peTi)/1e6));
         fprintf(gp_pipe,"set label 2 'Total number of hits: %.3f Mp' at screen 0.05,screen 0.99\n",sumcoll/1e6);
         fprintf(gp_pipe,"set label 3 'Total particles traced: %.3f Mp' at screen 0.05,screen 0.96 \n",(double) sumpart/1e6);
@@ -214,8 +204,6 @@ int main(){
         fprintf(gp_pipe,"set label 5 'Total efficiency: %.5f' at screen 0.95, screen 0.96 right\n",sumEnergy/(sumpart*particleMultiplier*sourceEnergy));
         fprintf(gp_pipe,"set label 6 'Average particle speed: %.2f Mp/s' at screen 0.5, screen 0.96 center\n",sumpart/1e6/((double)(ct.tv_sec * (int)1e6 + ct.tv_usec - peTi)/1e6));
         fprintf(gp_pipe,"set label 7 'Average source activity: %.2f MBq' at screen 0.05, screen 0.93 left\n",(sumpart*particleMultiplier)/1e6/((double)(ct.tv_sec * (int)1e6 + ct.tv_usec - peTi)/1e6));
-       // fprintf(gp_pipe,"set label 4 'Total number of hits: %.3f M' at screen 0.95,screen 0.98 right\n",sumcoll/1e6);
-//        fprintf(gp_pipe,"set logscale y\n");
 
         plot(gp_pipe,sumTChannels,channels);
 
@@ -226,35 +214,6 @@ int main(){
 
     }
 
-
-    //gettimeofday(&ct,NULL);
-    //printf ("Average speed: %f Mp/s\n",colledParticles/1e6/((double)(ct.tv_sec * (int)1e6 + ct.tv_usec - peTi)/1e6));
-
- /*   for (int i = 0; i < channels; i++){
-        printf("%d\n",ch[i]);
-    }*/
-   // plot(gp_pipe);
     freeReactions();
     return 0;
 }
-
-/*void testrand(){
-    struct timeval ct; //idő lekérésere szolgáló struct
-    gettimeofday(&ct,NULL);
-    long peTi = ct.tv_sec * (int)1e6 + ct.tv_usec;
-    for (int i=0;i<1e9;i++){
-        drand();
-    }
-    gettimeofday(&ct,NULL);
-    printf ("stdlib rand: %f\n",(double)(ct.tv_sec * (int)1e6 + ct.tv_usec - peTi)/1e6);
-
-    MTRand r = seedRand(1337);
-
-    gettimeofday(&ct,NULL);
-    peTi = ct.tv_sec * (int)1e6 + ct.tv_usec;
-    for(int i=0; i<1e9; i++) {
-        genRand(&r);
-    }
-    gettimeofday(&ct,NULL);
-    printf ("Mersenne-twister: %f\n",(double)(ct.tv_sec * (int)1e6 + ct.tv_usec - peTi)/1e6);
-}*/
