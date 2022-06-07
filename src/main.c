@@ -10,6 +10,7 @@
 #define inf 1e9
 #define pi 3.14159
 #define channels 1024
+#define devw 25
 
 double pztop = 2;
 double pzbottom = -2;
@@ -171,6 +172,11 @@ int main(){
     int sumdet = 0;
     double sumEnergy = 0;
 
+    double teffs[devw] = {0};
+    double meffs[devw] = {0};
+    int effsp = 0;
+    int effsf = 0;
+
     for (int i = 0; i < particleNum/update; i++){
 
         for (int j = 0; j < threadCount; j++){
@@ -201,8 +207,44 @@ int main(){
         fprintf(gp_pipe,"set label 1 'Average detected particle speed: %.1f kp/s' at screen 0.5,screen 0.99 center\n",sumcoll/1e3/((double)(ct.tv_sec * (int)1e6 + ct.tv_usec - peTi)/1e6));
         fprintf(gp_pipe,"set label 2 'Total number of hits: %.3f Mp' at screen 0.05,screen 0.99\n",sumcoll/1e6);
         fprintf(gp_pipe,"set label 3 'Total particles traced: %.3f Mp' at screen 0.05,screen 0.96 \n",(double) sumpart/1e6);
-        fprintf(gp_pipe,"set label 4 'Max efficiency: %.5f' at screen 0.95, screen 0.99 right\n",sumEnergy/(sumdet*sourceEnergy));
-        fprintf(gp_pipe,"set label 5 'Total efficiency: %.5f' at screen 0.95, screen 0.96 right\n",sumEnergy/(sumpart*particleMultiplier*sourceEnergy));
+        double meff = sumEnergy/(sumdet*sourceEnergy);
+        double teff = sumEnergy/(sumpart*particleMultiplier*sourceEnergy);
+        meffs[effsp] = meff;
+        teffs[effsp] = teff;
+        effsp++;
+        if (effsp > devw-1) {
+            effsp = 0;
+            effsf = 1;
+        }
+        int ec = 0;
+        if (effsf == 0){
+            ec = effsp;
+        } else {
+            ec = devw;
+        }
+        double avgm = 0;
+        double avgt = 0;
+
+        for (int k = 0; k < ec; k++){
+            avgm += meffs[k];
+            avgt += teffs[k];
+        }
+        avgm = avgm/ec;
+        avgt = avgt/ec;
+
+        double devm = 0;
+        double devt = 0;
+
+        for (int k = 0; k < ec; k++){
+            devm += (meffs[k] - avgm)*(meffs[k] - avgm);
+            devt += (teffs[k] - avgt)*(teffs[k] - avgt);
+        }
+
+        devm = sqrt(devm/ec);
+        devt = sqrt(devt/ec);
+
+        fprintf(gp_pipe,"set label 4 'Max efficiency: %.5f pm %.7f' at screen 0.95, screen 0.99 right\n",meff,devm);
+        fprintf(gp_pipe,"set label 5 'Total efficiency: %.5f pm %.7f' at screen 0.95, screen 0.96 right\n",teff,devt);
         fprintf(gp_pipe,"set label 6 'Average particle speed: %.2f Mp/s' at screen 0.5, screen 0.96 center\n",sumpart/1e6/((double)(ct.tv_sec * (int)1e6 + ct.tv_usec - peTi)/1e6));
         fprintf(gp_pipe,"set label 7 'Average source activity: %.2f MBq' at screen 0.05, screen 0.93 left\n",(sumpart*particleMultiplier)/1e6/((double)(ct.tv_sec * (int)1e6 + ct.tv_usec - peTi)/1e6));
 
