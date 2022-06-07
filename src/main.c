@@ -112,7 +112,7 @@ int main(){
     double roh = 3.67;
     initReactions(roh);
 
-    int threadCount = 16;
+    int threadCount = 20;
     long particleNum = 1e7;//5e8;
     int update = 1e4;
     double sourceEnergy = 4000;

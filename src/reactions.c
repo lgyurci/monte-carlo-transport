@@ -10,15 +10,11 @@ int y;
 double ro;
 double sourceEnergy;
 double *crossectionsAtSourceEnergy;
-double sumCrossectionsAtSourceEnergy;
 
 double getCrossection(double energy,int effect){ //effect: 0 - total, 1 - compton scattering, 2 - photoelectric effect, 3 - pair production in nucleus, 4 - pair production in electron bands
+    energy = energy/1000;
     if (energy == sourceEnergy) { //cache a forrás energiájára, mert ez gyakran kell
-        if (effect == 0){
-            return sumCrossectionsAtSourceEnergy;
-        } else {
-            return crossectionsAtSourceEnergy[effect];
-        }
+        return crossectionsAtSourceEnergy[effect];
     }
     if (energy <= xcom[0][0]) return 0;
     if (effect == 0){
@@ -29,7 +25,7 @@ double getCrossection(double energy,int effect){ //effect: 0 - total, 1 - compto
         return sum;
     }
     int i;
-    energy = energy/1000;
+
     for (i = 0; i < y && energy > xcom[0][i]; i++);
     double energy_low = xcom[0][i-1];
     double energy_high = xcom[0][i];
@@ -42,6 +38,12 @@ double getCrossection(double energy,int effect){ //effect: 0 - total, 1 - compto
 void getCrs(double energy, double *crs){
 
     energy = energy/1000;
+    if (energy == sourceEnergy){
+        for (int i = 0; i < x; i++){
+            crs[i] = crossectionsAtSourceEnergy[i];
+        }
+        return;
+    }
     if (energy <= xcom[0][0] || energy > xcom[0][y-1]) {
         for (int j = 0; j < x; j++){
             crs[j] = 0;
@@ -166,10 +168,10 @@ void initReactions(double roo,double source){
         fclose(f);
 
         crossectionsAtSourceEnergy = malloc(sizeof(double)*x);
-        sumCrossectionsAtSourceEnergy = 0;
+        crossectionsAtSourceEnergy[0] = 0;
         for (int i = 1; i < x; i++){
             crossectionsAtSourceEnergy[i] = getCrossection(source,0);
-            sumCrossectionsAtSourceEnergy += crossectionsAtSourceEnergy[i];
+            crossectionsAtSourceEnergy[0] += crossectionsAtSourceEnergy[i];
         }
         sourceEnergy = source;
     }
