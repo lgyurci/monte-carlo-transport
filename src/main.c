@@ -93,6 +93,7 @@ void *tracingThread(void* arg){
             if (energyAbsorbed > 0) {
                 colledParticles++;
                 energyAbsorbed = energyAbsorbed + targs->sigma*drandnt(targs->random);
+                if (energyAbsorbed < 0) energyAbsorbed = 0;
                 if (targs->maxEnergy < energyAbsorbed) energyAbsorbed = targs->maxEnergy;
                 (targs->chan)[((int)(energyAbsorbed*(channels-1)/(targs->maxEnergy)))]++;
             }
@@ -134,7 +135,7 @@ int main(){
 
     int *sumTChannels = malloc(sizeof(int)*channels);
 
-    int threadCount = 4;
+    int threadCount = 16;
 
     int **threadChannels = malloc(sizeof(int*)*threadCount);
     struct tracingThreadArgs *targs = malloc(sizeof(struct tracingThreadArgs)*threadCount);
