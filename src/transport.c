@@ -3,7 +3,7 @@
 #include "tmath.h"
 #include <math.h>
 #include <time.h>
-#include "mtwister.h"
+#include "wyhash.h"
 #define pi 3.14159
 #define inf 1e9
 
@@ -15,31 +15,34 @@ void initRandrand(){
    // srand((unsigned) time(&t));
 }*/
 
-MTRand initRandrandt(){
-    time_t t;
+/*uint64_t *initRandrandt(){
+    /*time_t t;
     MTRand random = seedRand((unsigned) time(&t));
     return random;
-}
+}*/
 
+    /*
 MTRand initRandt(long seed){
     return seedRand(seed);
 }
+*/
 
 /*double drand(){
     //return ((double) rand())/RAND_MAX;
     return genRand(&rval);
 }*/
 
-double drandt(MTRand *random){
-    return genRand(random);
+double drandt(uint64_t *random){
+    return wy2u01(wyrand(random));
 }
 
-double drandnt(MTRand *random){
-    double sum = 0;
+double drandnt(uint64_t *random){
+    /*double sum = 0;
     for (int i = 0; i < 12; i++){
         sum += drandt(random)-0.5;
     }
-    return sum;
+    return sum;*/
+    return wy2gau(wyrand(random));
 }
 
 /*double drandn(){
@@ -50,7 +53,7 @@ double drandnt(MTRand *random){
     return sum;
 }*/
 
-struct vector isotropicDirection(MTRand *random){
+struct vector isotropicDirection(uint64_t *random){
     struct vector direction;
     direction.z = drandt(random)*2-1;
     double fi = 2*pi*drandt(random);
@@ -60,7 +63,7 @@ struct vector isotropicDirection(MTRand *random){
     return direction;
 }
 
-struct vector isotropicScatter(struct vector direction,double cosangle,MTRand *random){
+struct vector isotropicScatter(struct vector direction,double cosangle,uint64_t *random){
     double fi = drandt(random)*2*pi;
     double s = sqrt(direction.x*direction.x+direction.y*direction.y);
     double x11 = direction.y/s;
@@ -89,8 +92,9 @@ struct vector isotropicScatter(struct vector direction,double cosangle,MTRand *r
     return ret;
 }
 
-struct vector coneDirection(double cosalpha,struct vector direction,MTRand *random){
+struct vector coneDirection(double cosalpha,struct vector direction,uint64_t *random){
     double u = cosalpha + (1-cosalpha)*drandt(random);
+    //printf("%f\n",drandt(random));
     return isotropicScatter(direction,u,random);
 }
 

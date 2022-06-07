@@ -2,14 +2,92 @@
 #include <stdlib.h>
 #include "transport.h"
 #include "tmath.h"
-#include "mtwister.h"
+#include "wyhash.h"
 
 double **xcom;
 int x;
 int y;
 double ro;
+double sourceEnergy;
+double *crossectionsAtSourceEnergy;
+double sumCrossectionsAtSourceEnergy;
 
-void initReactions(double roo){
+double getCrossection(double energy,int effect){ //effect: 0 - total, 1 - compton scattering, 2 - photoelectric effect, 3 - pair production in nucleus, 4 - pair production in electron bands
+    if (energy == sourceEnergy) { //cache a forrás energiájára, mert ez gyakran kell
+        if (effect == 0){
+            return sumCrossectionsAtSourceEnergy;
+        } else {
+            return crossectionsAtSourceEnergy[effect];
+        }
+    }
+    if (energy <= xcom[0][0]) return 0;
+    if (effect == 0){
+        double sum = 0;
+        for (int i = 1; i < x; i++){
+            sum += getCrossection(energy,i);
+        }
+        return sum;
+    }
+    int i;
+    energy = energy/1000;
+    for (i = 0; i < y && energy > xcom[0][i]; i++);
+    double energy_low = xcom[0][i-1];
+    double energy_high = xcom[0][i];
+    double crossection_low = xcom[effect][i-1];
+    double crossection_high = xcom[effect][i];
+    double crossection = ((energy - energy_low)/(energy_high - energy_low))*(crossection_high - crossection_low) + crossection_low;
+    return crossection*ro;
+}
+
+void getCrs(double energy, double *crs){
+
+    energy = energy/1000;
+    if (energy <= xcom[0][0] || energy > xcom[0][y-1]) {
+        for (int j = 0; j < x; j++){
+            crs[j] = 0;
+        }
+        return;
+    }
+
+    crs[0] = 0;
+
+    int j;
+    for (j = 0; j < y && energy > xcom[0][j]; j++);
+
+    double energy_low = xcom[0][j-1];
+    double energy_high = xcom[0][j];
+
+ /*   int eil = 0;
+    int eih = y-1;
+
+    while (eih-eil != 1){
+        int a = eil+(eih-eil)/2;
+        if (xcom[0][a] < energy){
+            eil = a;
+        } else {
+            eih = a;
+        }
+
+    }
+
+    double energy_low = xcom[0][eil];
+    double energy_high = xcom[0][eih];*/
+
+    for (int i = 1; i < x; i++){
+        double crossection_low = xcom[i][j-1];
+        double crossection_high = xcom[i][j];
+        double crossection = ((energy - energy_low)/(energy_high - energy_low))*(crossection_high - crossection_low) + crossection_low;
+        crs[i] = crossection*ro;
+        crs[0] += crs[i];
+    }
+}
+
+int getX(){
+    return x;
+}
+
+void initReactions(double roo,double source){
+    sourceEnergy = -1;
     ro = roo;
     FILE *f;
 
@@ -86,68 +164,69 @@ void initReactions(double roo){
         }
 
         fclose(f);
-    }
-}
 
-double getCrossection(double energy,int effect){ //effect: 0 - sum, 1 - compton scattering, 2 - photoelectric effect, 3 - pair production in nucleus, 4 - pair production in electron bands
-    if (energy <= xcom[0][0]) return 0;
-    if (effect == 0){
-        double sum = 0;
+        crossectionsAtSourceEnergy = malloc(sizeof(double)*x);
+        sumCrossectionsAtSourceEnergy = 0;
         for (int i = 1; i < x; i++){
-            sum += getCrossection(energy,i);
+            crossectionsAtSourceEnergy[i] = getCrossection(source,0);
+            sumCrossectionsAtSourceEnergy += crossectionsAtSourceEnergy[i];
         }
-        return sum;
+        sourceEnergy = source;
     }
-    int i;
-    energy = energy/1000;
-    for (i = 0; i < y && energy > xcom[0][i]; i++);
-    double energy_low = xcom[0][i-1];
-    double energy_high = xcom[0][i];
-    double crossection_low = xcom[effect][i-1];
-    double crossection_high = xcom[effect][i];
-    double crossection = ((energy - energy_low)/(energy_high - energy_low))*(crossection_high - crossection_low) + crossection_low;
-    return crossection*ro;
 }
 
-double shuffle_freeway_length(double energy,MTRand *random){
-    double lambda = -1*log(drandt(random))/getCrossection(energy,0);
+/*double calcTotalCrossection(double energy,double *crossections){
+    double total = 0;
+    for (int i = 1; i < x; i++){
+        crs[i] = getCrossection(energy,i);
+        total += crs[i];
+    }
+    return total;
+}*/
+
+double shuffle_freeway_length(uint64_t *random, double *crs){
+    //double lambda = -1*log(drandt(random))/getCrossection(energy,0);
+    double lambda = -1*log(drandt(random))/crs[0];
+    //double lambda = -1*log(drandt(random))/getCrossection(energy,0);
     return lambda;
 }
 
-/*int shuffle_reaction(double energy){
-    double min = -1*log(drand())/getCrossection(energy,1);
-    int mini = 1;
-    for (int i = 2; i < x;i++){
-        double c = -1*log(drand())/getCrossection(energy,i);
-        if (c < min){
-            min = c;
-            mini = i;
+int shuffle_reaction(uint64_t *random, double *crs){
+    double r = drandt(random)*crs[0];
+    double s = crs[1];
+    for (int i = 1; i <= x; i++){
+        if (r <= s){
+            return i;
         }
+        if (i >= 4) return -1;
+        s += crs[i+1];
     }
-    return mini;
-}*/
+    //printf("asdff somethingiswrong\n");
+    return 0;
+}
 
-int shuffle_reaction(double energy,MTRand *random){
-    double total = getCrossection(energy,0);
-    double r = drandt(random)*total;
+/*int shuffle_reaction(double energy,uint64_t *random,double totalCrossection){
+    double r = drandt(random)*getCrossection(energy,0);
     double s = getCrossection(energy,1);
-    for (int i = 1; i <= 4; i++){
+    for (int i = 1; i <= x; i++){
         if (r <= s){
             return i;
         }
         if (i >= 4) return -1;
         s += getCrossection(energy,i+1);
     }
-}
+    return 0;
+}*/
 
 void freeReactions(){
     for (int i = 0; i < x; i++){
         free(xcom[i]);
     }
     free(xcom);
+    free(crossectionsAtSourceEnergy);
 }
 
-struct vector comptonScatter(struct vector direction,double *energy,MTRand *random){
+struct vector comptonScatter(struct vector direction,double *energy,uint64_t *random){
 
     double lambda = 511/(*energy);
 

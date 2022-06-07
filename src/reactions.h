@@ -3,14 +3,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "transport.h"
-#include "mtwister.h"
+#include "wyhash.h"
 
 void initReactions();
 double getCrossection(double energy,int effect); //effect: 1 - compton scattering, 2 - photoelectric effect, 3 - pair production in nucleus, 4 - pair production in electron bands
-double shuffle_freeway_length(double energy,MTRand *random);
-int shuffle_reaction(double energy,MTRand *random);
+double shuffle_freeway_length(uint64_t *random,double *crs);
+int shuffle_reaction(uint64_t *random,double *crs);
+void getCrs(double energy, double *crs);
 void freeReactions();
-struct vector comptonScatter(struct vector direction,double *energy,MTRand *random);
+double *allocCrossections();
+int getX();
+struct vector comptonScatter(struct vector direction,double *energy,uint64_t *random);
 
 
 #endif

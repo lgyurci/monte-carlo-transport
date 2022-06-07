@@ -1,0 +1,28 @@
+#include "mtwister.h"
+#include "time.h"
+#include <sys/time.h>
+#include <stdio.h>
+#include "wyhash.h"
+
+int main(){
+    time_t t;
+    MTRand random = seedRand((unsigned) time(&t));
+
+    uint64_t _wyp[4];
+    make_secret(time(NULL),_wyp);
+  //  uint64_t asd = wyrand(_wyp);
+
+    struct timeval ct;
+    gettimeofday(&ct,NULL);
+    long peTi = ct.tv_sec * (int)1e6 + ct.tv_usec;
+    double a = 0;
+    for (long i = 0; i < 1e9; i++){
+        a = wy2u01(wyrand(_wyp));
+    }
+    printf("%f\n",a);
+
+        //genRand(&random);
+
+    gettimeofday(&ct,NULL);
+    printf("asd %f\n",((double)(ct.tv_sec * (int)1e6 + ct.tv_usec - peTi)/1e6));
+}

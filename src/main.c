@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include "reactions.h"
-#include "mtwister.h"
+#include "wyhash.h"
 #include <pthread.h>
 
 #define inf 1e9
@@ -17,7 +17,7 @@ double pzbottom = -2;
 double radius = 2;
 
 struct tracingThreadArgs{
-    MTRand *random;
+    uint64_t random[4];
     int *chan;
     int stop_at_colls;
     double sourceEnergy;
@@ -31,15 +31,16 @@ struct tracingThreadArgs{
 };
 
 
-double traceParticle(struct vector pos, struct vector direction, double particle_energy, MTRand *random){ //returns: absorbed energy by the crystal
+double traceParticle(struct vector pos, struct vector direction, double particle_energy, uint64_t *random, double *crs){ //returns: absorbed energy by the crystal
     int particle_is_alive = 1;
     double sumen = 0;
     while (particle_is_alive == 1){
         double lastPoint = intersect_cylinder_in(pos,direction,pztop,pzbottom,radius);
-        double freeway = shuffle_freeway_length(particle_energy,random);
+        getCrs(particle_energy,crs);
+        double freeway = shuffle_freeway_length(random,crs);
         if (freeway < lastPoint){
             pos = transloc(pos,vMult(direction,freeway));
-            int reac = shuffle_reaction(particle_energy,random);
+            int reac = shuffle_reaction(random,crs);
             double eenergy = 0;
             if (reac == 1){ //Compton scattering
                 eenergy = particle_energy;
@@ -55,10 +56,10 @@ double traceParticle(struct vector pos, struct vector direction, double particle
                 eenergy = particle_energy - 1022;
                 struct vector annihil1 = isotropicDirection(random);
                 struct vector annihil2 = vMult(annihil1,-1);
-                eenergy += traceParticle(pos,annihil1,511,random);
-                eenergy += traceParticle(pos,annihil2,511,random);
-            }
+                eenergy += traceParticle(pos,annihil1,511,random,crs);
+                eenergy += traceParticle(pos,annihil2,511,random,crs);
 
+            }
             sumen += eenergy;
         }
         else {
@@ -69,16 +70,18 @@ double traceParticle(struct vector pos, struct vector direction, double particle
     return sumen;
 }
 
-void plot(FILE *gp_pipe,int *chan, int chansize){
+void plot(FILE *gp_pipe,int *chan, int chansize,double energyPerChannel){
     fprintf(gp_pipe,"plot '-'\n");
     for (int i = 0; i < chansize; i++){
-        fprintf(gp_pipe,"%d %d\n",i,chan[i]);
+        fprintf(gp_pipe,"%f %d\n",i*energyPerChannel,chan[i]);
     }
     fprintf(gp_pipe,"e\n");
 }
 
 void *tracingThread(void* arg){
     struct tracingThreadArgs *targs = (struct tracingThreadArgs*) arg;
+
+    double *crs = malloc(getX()*sizeof(double));
 
     int colledParticles = 0;
     int i = 0;
@@ -89,7 +92,7 @@ void *tracingThread(void* arg){
         double firstPoint = intersect_cylinder_out(targs->sourcePos,direction,pztop,pzbottom,radius);
         if (firstPoint < inf){
             targs->detectorParticles++;
-            double energyAbsorbed = traceParticle(transloc(targs->sourcePos,vMult(direction,firstPoint)),direction,targs->sourceEnergy,targs->random);
+            double energyAbsorbed = traceParticle(transloc(targs->sourcePos,vMult(direction,firstPoint)),direction,targs->sourceEnergy,targs->random,crs);
             targs->sumEnergy += energyAbsorbed;
             if (energyAbsorbed > 0) {
                 colledParticles++;
@@ -101,6 +104,7 @@ void *tracingThread(void* arg){
         }
     }
     targs->particlesTraced += i;
+    free(crs);
 }
 
 int main(){
@@ -108,7 +112,8 @@ int main(){
     double roh = 3.67;
     initReactions(roh);
 
-    int particleNum = 5e8;
+    int threadCount = 16;
+    long particleNum = 1e7;//5e8;
     int update = 1e4;
     double sourceEnergy = 4000;
     double fwhm = 30;
@@ -117,12 +122,16 @@ int main(){
     double maxenergy = sourceEnergy+sigma*7;
     double energyPerChannel = maxenergy/channels;
 
-    MTRand mainrand = initRandrandt();
+    //uint64_t mainrand = initRandrandt();
+    uint64_t mainrand[4];
+    make_secret(time(NULL),mainrand);
 
     FILE* gp_pipe = popen ("gnuplot -persistent", "w");
 
     fprintf(gp_pipe,"set tmargin 4\n");
     fprintf(gp_pipe,"set logscale y\n");
+    fprintf(gp_pipe,"set ylabel 'Beütésszám'\n");
+    fprintf(gp_pipe,"set xlabel 'Energia (keV)'\n");
 
     struct vector sourcePos;
     sourcePos.x = 3;
@@ -136,11 +145,9 @@ int main(){
 
     int *sumTChannels = malloc(sizeof(int)*channels);
 
-    int threadCount = 16;
-
     int **threadChannels = malloc(sizeof(int*)*threadCount);
     struct tracingThreadArgs *targs = malloc(sizeof(struct tracingThreadArgs)*threadCount);
-    MTRand *threadRands = malloc(sizeof(MTRand)*threadCount);
+    //uint64_t **threadRands = malloc(sizeof(uint64_t)*threadCount);
     pthread_t *threads = malloc(sizeof(pthread_t)*threadCount);
 
     struct timeval ct;
@@ -152,9 +159,10 @@ int main(){
         for (int j = 0; j < channels; j++){
             threadChannels[i][j] = 0;
         }
-        threadRands[i] = initRandt((long)(drandt(&mainrand)*1e6));
+        //threadRands[i] = initRandt((long)(drandt(&mainrand)*1e6));
+        make_secret(wyrand(mainrand),targs->random);
         targs[i].chan = threadChannels[i];
-        targs[i].random =  &(threadRands[i]);
+      //  targs[i].random =  &(threadRands[i]);
         targs[i].stop_at_colls = update;
         targs[i].sourceEnergy = sourceEnergy;
         targs[i].cosalpha = cosalpha;
@@ -177,7 +185,7 @@ int main(){
     int effsp = 0;
     int effsf = 0;
 
-    for (int i = 0; i < particleNum/update; i++){
+    for (int i = 0; i < particleNum/(update*threadCount); i++){
 
         for (int j = 0; j < threadCount; j++){
             pthread_join(threads[j],NULL);
@@ -248,7 +256,7 @@ int main(){
         fprintf(gp_pipe,"set label 6 'Average particle speed: %.2f Mp/s' at screen 0.5, screen 0.96 center\n",sumpart/1e6/((double)(ct.tv_sec * (int)1e6 + ct.tv_usec - peTi)/1e6));
         fprintf(gp_pipe,"set label 7 'Average source activity: %.2f MBq' at screen 0.05, screen 0.93 left\n",(sumpart*particleMultiplier)/1e6/((double)(ct.tv_sec * (int)1e6 + ct.tv_usec - peTi)/1e6));
 
-        plot(gp_pipe,sumTChannels,channels);
+        plot(gp_pipe,sumTChannels,channels,energyPerChannel);
 
         sumcoll = 0;
         sumpart = 0;
@@ -257,6 +265,6 @@ int main(){
 
     }
 
-    freeReactions();
+   // freeReactions();
     return 0;
 }
