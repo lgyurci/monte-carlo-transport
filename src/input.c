@@ -32,10 +32,6 @@ void setDefaultInputs(struct input_data * id){
     copySFromInto("crs_NaI",id->xcomLocation);
 }
 
-void configure(struct input_data * id,char *option,char *params){
-
-}
-
 
 struct input_data getInput(int argc,char** argv){
     struct input_data id;
@@ -64,8 +60,23 @@ struct input_data getInput(int argc,char** argv){
                 option[ol] = line[ol];
             }
             option[ol] = '\0';
-            ol++;
-            configure(&id,option,&(line[ol]));
+
+            if (strcmp(option,"RTThreads") == 0) {
+                char tc [6];
+                for (int i = 0; i < 6; i++){
+                    tc[i] = 0;
+                }
+                ol++;
+                int i;
+                for(i = 0; line[ol] != ';' && line[ol] != '\0'; ol++){
+                    tc[i++] = line[ol];
+                }
+                tc[i] = '\0';
+                tcount = atoi(tc);
+                if (tcount == 0) {
+                    exit(0);
+                }
+            }
         }
     }
 
