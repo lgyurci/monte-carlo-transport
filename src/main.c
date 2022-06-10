@@ -105,6 +105,8 @@ void *tracingThread(void* arg){
     }
     targs->particlesTraced += i;
     free(crs);
+
+    return 0;
 }
 
 int main(){
@@ -113,7 +115,7 @@ int main(){
     initReactions(roh);
 
     int threadCount = 20;
-    long particleNum = 1e7;//5e8;
+    unsigned long particleNum = 1e7;//5e8;
     int update = 1e4;
     double sourceEnergy = 4000;
     double fwhm = 30;

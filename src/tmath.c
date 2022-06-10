@@ -1,10 +1,11 @@
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include "tmath.h"
 
-struct vector{
+/*struct vector{
     double x,y,z;
-};
+};*/
 
 /*
 double dotProduct(struct vector v1, struct vector v2); //skaláris szorzat
