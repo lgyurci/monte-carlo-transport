@@ -3,6 +3,7 @@
 /docs/documentation.out
 /docs/documentation.log
 /docs/documentation.aux
+/savefile
 *.kate-swp
 /mtransport
 /mtransport.exe

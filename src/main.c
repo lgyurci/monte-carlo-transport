@@ -10,7 +10,6 @@
 
 #define inf 1e9
 #define pi 3.14159
-#define channels 1024
 #define devw 25
 
 /*double pztop = 2;
@@ -30,6 +29,7 @@ struct tracingThreadArgs{
     double sumEnergy;
     double maxEnergy;
     struct vector *cylinder;
+    int channelnum;
 };
 
 
@@ -73,7 +73,7 @@ double traceParticle(struct vector pos, struct vector direction, struct vector *
 }
 
 void plot(FILE *gp_pipe,int *chan, int chansize,double energyPerChannel){
-    fprintf(gp_pipe,"plot '-'\n");
+    fprintf(gp_pipe,"plot '-' notitle\n");
     for (int i = 0; i < chansize; i++){
         fprintf(gp_pipe,"%f %d\n",i*energyPerChannel,chan[i]);
     }
@@ -101,7 +101,7 @@ void *tracingThread(void* arg){
                 energyAbsorbed = energyAbsorbed + targs->sigma*drandnt(targs->random);
                 if (energyAbsorbed < 0) energyAbsorbed = 0;
                 if (targs->maxEnergy < energyAbsorbed) energyAbsorbed = targs->maxEnergy;
-                (targs->chan)[((int)(energyAbsorbed*(channels-1)/(targs->maxEnergy)))]++;
+                (targs->chan)[((int)(energyAbsorbed*(targs->channelnum-1)/(targs->maxEnergy)))]++;
             }
         }
     }
@@ -126,6 +126,7 @@ int main(int argc,char **argv){
     double sigma = id.sigma;
 
     double maxenergy = sourceEnergy+sigma*7;
+    double channels = id.channels;
     double energyPerChannel = maxenergy/channels;
 
     initReactions(roh,sourceEnergy,id.xcomLocation);
@@ -156,6 +157,7 @@ int main(int argc,char **argv){
     fprintf(gp_pipe,"set logscale y\n");
     fprintf(gp_pipe,"set ylabel 'Beütésszám'\n");
     fprintf(gp_pipe,"set xlabel 'Energia (keV)'\n");
+    fprintf(gp_pipe,"set terminal wxt size 1000,600 title 'Monte Carlo transport'\n");
 
     struct vector sourcePos = id.sourcePos;
 
@@ -194,6 +196,7 @@ int main(int argc,char **argv){
         targs[i].sumEnergy = 0;
         targs[i].maxEnergy = maxenergy;
         targs[i].cylinder = &cylinder;
+        targs[i].channelnum = channels;
         pthread_create(&(threads[i]),NULL,tracingThread,&(targs[i]));
     }
 
@@ -278,13 +281,22 @@ int main(int argc,char **argv){
         fprintf(gp_pipe,"set label 6 'Average particle speed: %.2f Mp/s' at screen 0.5, screen 0.96 center\n",sumpart/1e6/((double)(ct.tv_sec * (int)1e6 + ct.tv_usec - peTi)/1e6));
         fprintf(gp_pipe,"set label 7 'Average source activity: %.2f MBq' at screen 0.05, screen 0.93 left\n",(sumpart*particleMultiplier)/1e6/((double)(ct.tv_sec * (int)1e6 + ct.tv_usec - peTi)/1e6));
 
-        plot(gp_pipe,sumTChannels,channels,energyPerChannel);
+        if (id.realtime == 1) plot(gp_pipe,sumTChannels,channels,energyPerChannel);
 
         sumcoll = 0;
         sumpart = 0;
         sumdet = 0;
         sumEnergy = 0;
 
+    }
+
+
+    if (id.savefile[0] != '\0'){
+        FILE* savef = fopen (id.savefile, "w");
+        for (int i = 0; i < channels; i++){
+            fprintf(savef,"%f %d\n",i*energyPerChannel,sumTChannels[i]);
+        }
+        fclose(savef);
     }
 
    // freeReactions();
