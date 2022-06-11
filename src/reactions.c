@@ -3,6 +3,7 @@
 #include "transport.h"
 #include "tmath.h"
 #include "wyhash.h"
+#include "reactions.h"
 
 double **xcom;
 int x;
@@ -88,12 +89,12 @@ int getX(){
     return x;
 }
 
-void initReactions(double roo,double source){
+void initReactions(double roo,double source,char *xcomfile){
     sourceEnergy = -1;
     ro = roo;
     FILE *f;
 
-    f = fopen("../data.pl","r");
+    f = fopen(xcomfile,"r");
 
 
     if (f){
@@ -174,6 +175,8 @@ void initReactions(double roo,double source){
             crossectionsAtSourceEnergy[0] += crossectionsAtSourceEnergy[i];
         }
         sourceEnergy = source;
+    } else {
+
     }
 }
 

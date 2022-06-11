@@ -6,15 +6,16 @@
 #include "reactions.h"
 #include "wyhash.h"
 #include <pthread.h>
+#include "input.h"
 
 #define inf 1e9
 #define pi 3.14159
 #define channels 1024
 #define devw 25
 
-double pztop = 2;
+/*double pztop = 2;
 double pzbottom = -2;
-double radius = 2;
+double radius = 2;*/
 
 struct tracingThreadArgs{
     uint64_t random[4];
@@ -28,14 +29,15 @@ struct tracingThreadArgs{
     int detectorParticles;
     double sumEnergy;
     double maxEnergy;
+    struct vector *cylinder;
 };
 
 
-double traceParticle(struct vector pos, struct vector direction, double particle_energy, uint64_t *random, double *crs){ //returns: absorbed energy by the crystal
+double traceParticle(struct vector pos, struct vector direction, struct vector *cylinder,double particle_energy, uint64_t *random, double *crs){ //returns: absorbed energy by the crystal
     int particle_is_alive = 1;
     double sumen = 0;
     while (particle_is_alive == 1){
-        double lastPoint = intersect_cylinder_in(pos,direction,pztop,pzbottom,radius);
+        double lastPoint = intersect_cylinder_in(pos,direction,cylinder->x,cylinder->y,cylinder->z);
         getCrs(particle_energy,crs);
         double freeway = shuffle_freeway_length(random,crs);
         if (freeway < lastPoint){
@@ -56,8 +58,8 @@ double traceParticle(struct vector pos, struct vector direction, double particle
                 eenergy = particle_energy - 1022;
                 struct vector annihil1 = isotropicDirection(random);
                 struct vector annihil2 = vMult(annihil1,-1);
-                eenergy += traceParticle(pos,annihil1,511,random,crs);
-                eenergy += traceParticle(pos,annihil2,511,random,crs);
+                eenergy += traceParticle(pos,annihil1,cylinder,511,random,crs);
+                eenergy += traceParticle(pos,annihil2,cylinder,511,random,crs);
 
             }
             sumen += eenergy;
@@ -89,10 +91,10 @@ void *tracingThread(void* arg){
     for (; colledParticles < targs->stop_at_colls; i++){
         //struct vector direction = isotropicDirection();
         struct vector direction = coneDirection(targs->cosalpha,vMult(targs->sourcePos,-1),targs->random);
-        double firstPoint = intersect_cylinder_out(targs->sourcePos,direction,pztop,pzbottom,radius);
+        double firstPoint = intersect_cylinder_out(targs->sourcePos,direction,targs->cylinder->x,targs->cylinder->y,targs->cylinder->z);
         if (firstPoint < inf){
             targs->detectorParticles++;
-            double energyAbsorbed = traceParticle(transloc(targs->sourcePos,vMult(direction,firstPoint)),direction,targs->sourceEnergy,targs->random,crs);
+            double energyAbsorbed = traceParticle(transloc(targs->sourcePos,vMult(direction,firstPoint)),direction,targs->cylinder,targs->sourceEnergy,targs->random,crs);
             targs->sumEnergy += energyAbsorbed;
             if (energyAbsorbed > 0) {
                 colledParticles++;
@@ -109,38 +111,55 @@ void *tracingThread(void* arg){
     return 0;
 }
 
-int main(){
+int main(int argc,char **argv){
 
-    double roh = 3.67;
-    initReactions(roh);
+    struct input_data id = getInput(argc,argv);
 
-    int threadCount = 20;
-    unsigned long particleNum = 1e7;//5e8;
-    int update = 1e4;
-    double sourceEnergy = 4000;
-    double fwhm = 30;
-    double sigma = fwhm/2.355;
+    double roh = id.rho;
+
+    struct vector cylinder = id.cylinder;
+
+    int threadCount = id.threadCount;
+    unsigned long particleNum = id.particleNum;//5e8;
+    int update = id.updateFreq;
+    double sourceEnergy = id.sourceEnergy;
+    double sigma = id.sigma;
 
     double maxenergy = sourceEnergy+sigma*7;
     double energyPerChannel = maxenergy/channels;
+
+    initReactions(roh,sourceEnergy,id.xcomLocation);
 
     //uint64_t mainrand = initRandrandt();
     uint64_t mainrand[4];
     make_secret(time(NULL),mainrand);
 
-    FILE* gp_pipe = popen ("gnuplot -persistent", "w");
+    char gnuplot_command[255];
+    char gnuplot_params[255] = " -persistent";
+    int gpi = 0;
+    for (; gpi < 255 && id.gnuplotExecutable[gpi] != '\0'; gpi++){
+        gnuplot_command[gpi] = id.gnuplotExecutable[gpi];
+    }
+
+    int gpa = 0;
+
+    for (; gpi < 255; gpi++){
+        gnuplot_command[gpi] = gnuplot_params[gpa++];
+    }
+
+    gnuplot_command[gpi] = '\0';
+
+
+    FILE* gp_pipe = popen (gnuplot_command, "w");
 
     fprintf(gp_pipe,"set tmargin 4\n");
     fprintf(gp_pipe,"set logscale y\n");
     fprintf(gp_pipe,"set ylabel 'Beütésszám'\n");
     fprintf(gp_pipe,"set xlabel 'Energia (keV)'\n");
 
-    struct vector sourcePos;
-    sourcePos.x = 3;
-    sourcePos.y = 3;
-    sourcePos.z = 3;
+    struct vector sourcePos = id.sourcePos;
 
-    double sinalpha = sqrt(radius*radius+(pztop-pzbottom)*(pztop-pzbottom))/vAbs(sourcePos);
+    double sinalpha = sqrt(cylinder.z*cylinder.z+(cylinder.x-cylinder.y)*(cylinder.x-cylinder.y))/vAbs(sourcePos);
     double cosalpha = sqrt(1-sinalpha*sinalpha);
     double ang = 2*pi*(1-cosalpha);
     double particleMultiplier = 4*pi/ang;
@@ -174,6 +193,7 @@ int main(){
         targs[i].detectorParticles = 0;
         targs[i].sumEnergy = 0;
         targs[i].maxEnergy = maxenergy;
+        targs[i].cylinder = &cylinder;
         pthread_create(&(threads[i]),NULL,tracingThread,&(targs[i]));
     }
 

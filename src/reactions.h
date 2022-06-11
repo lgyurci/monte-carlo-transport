@@ -5,7 +5,7 @@
 #include "transport.h"
 #include "wyhash.h"
 
-void initReactions();
+void initReactions(double roo,double source,char *xcomfile);
 double getCrossection(double energy,int effect); //effect: 1 - compton scattering, 2 - photoelectric effect, 3 - pair production in nucleus, 4 - pair production in electron bands
 double shuffle_freeway_length(uint64_t *random,double *crs);
 int shuffle_reaction(uint64_t *random,double *crs);
