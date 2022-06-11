@@ -293,6 +293,14 @@ int main(int argc,char **argv){
         fclose(savef);
     }
 
-   // freeReactions();
+    free(sumTChannels);
+    for (int i = 0; i < threadCount; i++){
+        free(threadChannels[i]);
+    }
+    free(threadChannels);
+    free(threads);
+    free(targs);
+
+    freeReactions();
     return 0;
 }
