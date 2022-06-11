@@ -12,10 +12,6 @@
 #define pi 3.14159
 #define devw 25
 
-/*double pztop = 2;
-double pzbottom = -2;
-double radius = 2;*/
-
 struct tracingThreadArgs{
     uint64_t random[4];
     int *chan;
@@ -182,10 +178,8 @@ int main(int argc,char **argv){
         for (int j = 0; j < channels; j++){
             threadChannels[i][j] = 0;
         }
-        //threadRands[i] = initRandt((long)(drandt(&mainrand)*1e6));
         make_secret(wyrand(mainrand),targs->random);
         targs[i].chan = threadChannels[i];
-      //  targs[i].random =  &(threadRands[i]);
         targs[i].stop_at_colls = update;
         targs[i].sourceEnergy = sourceEnergy;
         targs[i].cosalpha = cosalpha;

@@ -1,26 +1,6 @@
 #include <math.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include "tmath.h"
-
-/*struct vector{
-    double x,y,z;
-};*/
-
-/*
-double dotProduct(struct vector v1, struct vector v2); //skaláris szorzat
-bool isNullV(struct vector v); //null vektor-e
-double pDist(struct vector p1, struct vector p2); //két pont távolsága
-double vAbs(struct vector v); //vektor abszolút értéke
-struct vector crossProduct(struct vector v1, struct vector v2); //vektoriális szorzat
-double vAngle(struct vector v1, struct vector v2); //két vektor által bezárt szög
-struct vector vAdd(struct vector v1, struct vector v2); //két vektor összege
-struct vector reduceTo(struct vector v, double targetLength); //vektor hosszát egy adott értékre állítja, az írányát nem változtatja
-struct vector vMult(struct vector v1, double lambda); //vektor szorzása skalárral
-struct vector transloc(struct vector p, struct vector v); //pont eltolása egy adott vektorral
-struct vector pToV(struct vector p1,struct vector p2); ///két pontból csinál vektort
-void printVector(struct vector v); //egy vektor kiírása a standard outra (csak debug funkció)
-bool isSuspiciousV(struct vector v); //"gyanús-e" egy vektor (inf érték vagy ilyesmi)*/
 
 struct vector crossProduct(struct vector v1, struct vector v2){ //vektoriális szorzat (egyéb indoklás nélkül)
     struct vector v;
@@ -81,16 +61,9 @@ struct vector pToV(struct vector p1,struct vector p2){ //két pont által meghat
 double pDist(struct vector p1, struct vector p2){ //két pont távolsága
     return sqrt((p1.x-p2.x)*(p1.x-p2.x)+(p1.y-p2.y)*(p1.y-p2.y)+(p1.z-p2.z)*(p1.z-p2.z));
 }
-bool isNullV(struct vector v){ //null vektor-e
-    if (v.x == 0 && v.y == 0 && v.z == 0) return true;
-    return false;
-}
+
 double dotProduct(struct vector v1, struct vector v2){ //skaláris szorzat
     return v1.x*v2.x+v1.y*v2.y+v1.z*v2.z;
-}
-bool isSuspiciousV(struct vector v){ //inf vagy hasonló érték szerepel-e a vektorban (csak debug)
-    if ((v.x == v.x)&&(v.y == v.y)&&(v.z == v.z)) return false;
-    return true;
 }
 
 void printVector(struct vector v){

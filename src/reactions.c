@@ -179,15 +179,6 @@ void initReactions(double roo,double source,char *xcomfile){
     }
 }
 
-/*double calcTotalCrossection(double energy,double *crossections){
-    double total = 0;
-    for (int i = 1; i < x; i++){
-        crs[i] = getCrossection(energy,i);
-        total += crs[i];
-    }
-    return total;
-}*/
-
 double shuffle_freeway_length(uint64_t *random, double *crs){
     //double lambda = -1*log(drandt(random))/getCrossection(energy,0);
     double lambda = -1*log(drandt(random))/crs[0];
@@ -205,22 +196,9 @@ int shuffle_reaction(uint64_t *random, double *crs){
         if (i >= 4) return -1;
         s += crs[i+1];
     }
-    //printf("asdff somethingiswrong\n");
     return 0;
 }
 
-/*int shuffle_reaction(double energy,uint64_t *random,double totalCrossection){
-    double r = drandt(random)*getCrossection(energy,0);
-    double s = getCrossection(energy,1);
-    for (int i = 1; i <= x; i++){
-        if (r <= s){
-            return i;
-        }
-        if (i >= 4) return -1;
-        s += getCrossection(energy,i+1);
-    }
-    return 0;
-}*/
 
 void freeReactions(){
     for (int i = 0; i < x; i++){
@@ -266,9 +244,3 @@ struct vector comptonScatter(struct vector direction,double *energy,uint64_t *ra
     *energy = E2;
     return ret;
 }
-/*
-
-int main(){
-    initReactions();
-    freeReactions();
-}*/

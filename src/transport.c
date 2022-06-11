@@ -78,7 +78,6 @@ struct vector intersect_cylinder(struct vector position, struct vector direction
         dist.x = (-1*b+sqrt(d))/(2*a);
         dist.y = (-1*b-sqrt(d))/(2*a);
     }
-//    printf("ic %f %f\n",dist.x,dist.y);
     return dist;
 }
 
@@ -123,7 +122,6 @@ double intersect_cylinder_out(struct vector position,struct vector direction,dou
     }
 
     if (dmin >= inf || dmax < 0 || (position.z > pztop && direction.z > 0) || (position.z < pzbottom && direction.z < 0)){
-       // printf("asd %f %f\n",de.x,de.y);
         dist = inf;
     } else {
         double dcyl = 0;
@@ -162,25 +160,3 @@ double intersect_cylinder_out(struct vector position,struct vector direction,dou
     }
     return dist;
 }
-
-
-
-/*int main(){
-    initRandrand();
-    for (int i = 0; i < 10000; i++){
-        struct vector asd = isotropicDirection();
-        struct vector pos;
-        pos.x = 0;
-        pos.y = 0;
-        pos.z = 0;
-        double asd2 = intersect_cylinder_in(pos,asd,2,-2,1);
-        if (asd2 < inf) {
-            asd = vMult(asd,asd2);
-            asd = transloc(pos,asd);
-            printf("%f\t%f\t%f\n",asd.x,asd.y,asd.z);
-        }
-
-      //  printf("%f\n",asd2);
-    }
-    return 0;
-}*/
