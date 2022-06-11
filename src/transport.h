@@ -2,9 +2,9 @@
 #define transport_H_
 #include <stdlib.h>
 #include "tmath.h"
-#include "wyhash.h"
 #include <math.h>
 #include <time.h>
+#include "random.h"
 
 double drandt(uint64_t *random);
 struct vector isotropicDirection(uint64_t *random);

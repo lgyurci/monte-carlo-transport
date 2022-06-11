@@ -3,55 +3,9 @@
 #include "tmath.h"
 #include <math.h>
 #include <time.h>
-#include "wyhash.h"
+#include "random.h"
 #define pi 3.14159
 #define inf 1e9
-
-/*MTRand rval;
-
-void initRandrand(){
-    time_t t;
-    rval = seedRand((unsigned) time(&t));
-   // srand((unsigned) time(&t));
-}*/
-
-/*uint64_t *initRandrandt(){
-    /*time_t t;
-    MTRand random = seedRand((unsigned) time(&t));
-    return random;
-}*/
-
-    /*
-MTRand initRandt(long seed){
-    return seedRand(seed);
-}
-*/
-
-/*double drand(){
-    //return ((double) rand())/RAND_MAX;
-    return genRand(&rval);
-}*/
-
-double drandt(uint64_t *random){
-    return wy2u01(wyrand(random));
-}
-
-double drandnt(uint64_t *random){
-    /*double sum = 0;
-    for (int i = 0; i < 12; i++){
-        sum += drandt(random)-0.5;
-    }
-    return sum;*/
-    return wy2gau(wyrand(random));
-}
-
-/*double drandn(){
-    double sum = 0;
-    for (int i = 0; i < 12; i++){
-        sum += drand()-0.5;
-    }
-    return sum;
-}*/
 
 struct vector isotropicDirection(uint64_t *random){
     struct vector direction;

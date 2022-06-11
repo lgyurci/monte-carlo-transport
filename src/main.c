@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include "reactions.h"
-#include "wyhash.h"
+#include "random.h"
 #include <pthread.h>
 #include "input.h"
 

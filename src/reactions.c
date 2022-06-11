@@ -1,8 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "transport.h"
 #include "tmath.h"
-#include "wyhash.h"
+#include "random.h"
 #include "reactions.h"
 
 double **xcom;
