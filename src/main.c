@@ -231,9 +231,6 @@ int main(int argc,char **argv){
 
         gettimeofday(&ct,NULL);
 
-        fprintf(gp_pipe,"set label 1 'Average detected particle speed: %.1f kp/s' at screen 0.5,screen 0.99 center\n",sumcoll/1e3/((double)(ct.tv_sec * (int)1e6 + ct.tv_usec - peTi)/1e6));
-        fprintf(gp_pipe,"set label 2 'Total number of hits: %.3f Mp' at screen 0.05,screen 0.99\n",sumcoll/1e6);
-        fprintf(gp_pipe,"set label 3 'Total particles traced: %.3f Mp' at screen 0.05,screen 0.96 \n",(double) sumpart/1e6);
         double meff = sumEnergy/(sumdet*sourceEnergy);
         double teff = sumEnergy/(sumpart*particleMultiplier*sourceEnergy);
         meffs[effsp] = meff;
@@ -270,12 +267,24 @@ int main(int argc,char **argv){
         devm = sqrt(devm/ec);
         devt = sqrt(devt/ec);
 
-        fprintf(gp_pipe,"set label 4 'Max efficiency: %.5f pm %.7f' at screen 0.95, screen 0.99 right\n",meff,devm);
-        fprintf(gp_pipe,"set label 5 'Total efficiency: %.5f pm %.7f' at screen 0.95, screen 0.96 right\n",teff,devt);
-        fprintf(gp_pipe,"set label 6 'Average particle speed: %.2f Mp/s' at screen 0.5, screen 0.96 center\n",sumpart/1e6/((double)(ct.tv_sec * (int)1e6 + ct.tv_usec - peTi)/1e6));
-        fprintf(gp_pipe,"set label 7 'Average source activity: %.2f MBq' at screen 0.05, screen 0.93 left\n",(sumpart*particleMultiplier)/1e6/((double)(ct.tv_sec * (int)1e6 + ct.tv_usec - peTi)/1e6));
+        double avgspd = sumpart/1e6/((double)(ct.tv_sec * (int)1e6 + ct.tv_usec - peTi)/1e6);
+        double avgact = (sumpart*particleMultiplier)/1e6/((double)(ct.tv_sec * (int)1e6 + ct.tv_usec - peTi)/1e6);
+        double detspd = sumcoll/1e3/((double)(ct.tv_sec * (int)1e6 + ct.tv_usec - peTi)/1e6);
 
-        if (id.realtime == 1) plot(gp_pipe,sumTChannels,channels,energyPerChannel);
+        if(id.realtime == 1){
+
+            fprintf(gp_pipe,"set label 1 'Average detected particle speed: %.1f kp/s' at screen 0.5,screen 0.99 center\n",detspd);
+            fprintf(gp_pipe,"set label 2 'Total number of hits: %.3f Mp' at screen 0.05,screen 0.99\n",(double) sumcoll/1e6);
+            fprintf(gp_pipe,"set label 3 'Total particles traced: %.3f Mp' at screen 0.05,screen 0.96 \n",(double) sumpart/1e6);
+
+            fprintf(gp_pipe,"set label 4 'Max efficiency: %.5f pm %.7f' at screen 0.95, screen 0.99 right\n",meff,devm);
+            fprintf(gp_pipe,"set label 5 'Total efficiency: %.5f pm %.7f' at screen 0.95, screen 0.96 right\n",teff,devt);
+            fprintf(gp_pipe,"set label 6 'Average particle speed: %.2f Mp/s' at screen 0.5, screen 0.96 center\n",avgspd);
+            fprintf(gp_pipe,"set label 7 'Average source activity: %.2f MBq' at screen 0.05, screen 0.93 left\n",avgact);
+
+            plot(gp_pipe,sumTChannels,channels,energyPerChannel);
+
+        }
 
         sumcoll = 0;
         sumpart = 0;
