@@ -131,29 +131,33 @@ int main(int argc,char **argv){
     uint64_t mainrand[4];
     make_secret(time(NULL),mainrand);
 
-    char gnuplot_command[255];
-    char gnuplot_params[255] = " -persistent";
-    int gpi = 0;
-    for (; gpi < 255 && id.gnuplotExecutable[gpi] != '\0'; gpi++){
-        gnuplot_command[gpi] = id.gnuplotExecutable[gpi];
+    FILE* gp_pipe;
+
+    if (id.realtime == 1){
+
+        char gnuplot_command[255];
+        char gnuplot_params[255] = " -persistent";
+        int gpi = 0;
+        for (; gpi < 255 && id.gnuplotExecutable[gpi] != '\0'; gpi++){
+            gnuplot_command[gpi] = id.gnuplotExecutable[gpi];
+        }
+
+        int gpa = 0;
+
+        for (; gpi < 254; gpi++){
+            gnuplot_command[gpi] = gnuplot_params[gpa++];
+        }
+
+        gnuplot_command[gpi] = '\0';
+
+        gp_pipe = popen (gnuplot_command, "w");
+
+        fprintf(gp_pipe,"set tmargin 4\n");
+        fprintf(gp_pipe,"set logscale y\n");
+        fprintf(gp_pipe,"set ylabel 'Beütésszám'\n");
+        fprintf(gp_pipe,"set xlabel 'Energia (keV)'\n");
+        fprintf(gp_pipe,"set terminal wxt size 1000,600 title 'Monte Carlo transport'\n");
     }
-
-    int gpa = 0;
-
-    for (; gpi < 254; gpi++){
-        gnuplot_command[gpi] = gnuplot_params[gpa++];
-    }
-
-    gnuplot_command[gpi] = '\0';
-
-
-    FILE* gp_pipe = popen (gnuplot_command, "w");
-
-    fprintf(gp_pipe,"set tmargin 4\n");
-    fprintf(gp_pipe,"set logscale y\n");
-    fprintf(gp_pipe,"set ylabel 'Beütésszám'\n");
-    fprintf(gp_pipe,"set xlabel 'Energia (keV)'\n");
-    fprintf(gp_pipe,"set terminal wxt size 1000,600 title 'Monte Carlo transport'\n");
 
     struct vector sourcePos = id.sourcePos;
 
@@ -301,6 +305,14 @@ int main(int argc,char **argv){
         }
         fclose(savef);
     }
+
+    for (int j = 0; j < threadCount; j++){
+            pthread_join(threads[j],NULL);
+    }
+
+    fprintf(gp_pipe,"pause mouse close\n");
+    fprintf(gp_pipe,"q\n");
+    pclose(gp_pipe);
 
     free(sumTChannels);
     for (int i = 0; i < threadCount; i++){
