@@ -140,7 +140,7 @@ int main(int argc,char **argv){
 
     int gpa = 0;
 
-    for (; gpi < 255; gpi++){
+    for (; gpi < 254; gpi++){
         gnuplot_command[gpi] = gnuplot_params[gpa++];
     }
 
