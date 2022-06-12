@@ -207,6 +207,10 @@ int main(int argc,char **argv){
     double meffs[devw] = {0};
     int effsp = 0;
     int effsf = 0;
+    double meff;
+    double teff;
+    double devm;
+    double devt;
 
     for (int i = 0; i < particleNum/(update*threadCount); i++){
 
@@ -235,8 +239,8 @@ int main(int argc,char **argv){
 
         gettimeofday(&ct,NULL);
 
-        double meff = sumEnergy/(sumdet*sourceEnergy);
-        double teff = sumEnergy/(sumpart*particleMultiplier*sourceEnergy);
+        meff = sumEnergy/(sumdet*sourceEnergy);
+        teff = sumEnergy/(sumpart*particleMultiplier*sourceEnergy);
         meffs[effsp] = meff;
         teffs[effsp] = teff;
         effsp++;
@@ -260,8 +264,8 @@ int main(int argc,char **argv){
         avgm = avgm/ec;
         avgt = avgt/ec;
 
-        double devm = 0;
-        double devt = 0;
+        devm = 0;
+        devt = 0;
 
         for (int k = 0; k < ec; k++){
             devm += (meffs[k] - avgm)*(meffs[k] - avgm);
@@ -306,9 +310,13 @@ int main(int argc,char **argv){
         fclose(savef);
     }
 
+    //printf ("'Source energy'\t 'Eta_t_o_t' \t 'Delta Eta_t_o_t'\t 'Eta_i_n_t'\t 'Delta Eta_i_n_t'\n");
+    printf ("%f\t%f\t%f\t%f\t%f\n",sourceEnergy,teff,devt,meff,devm);
+
     for (int j = 0; j < threadCount; j++){
             pthread_join(threads[j],NULL);
     }
+
 
     fprintf(gp_pipe,"pause mouse close\n");
     fprintf(gp_pipe,"q\n");
