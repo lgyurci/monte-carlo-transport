@@ -160,8 +160,8 @@ int main(int argc,char **argv){
 
         fprintf(gp_pipe,"set tmargin 4\n");
         fprintf(gp_pipe,"set logscale y\n");
-        fprintf(gp_pipe,"set ylabel 'Beütésszám'\n");
-        fprintf(gp_pipe,"set xlabel 'Energia (keV)'\n");
+        fprintf(gp_pipe,"set ylabel 'Counts'\n");
+        fprintf(gp_pipe,"set xlabel 'Energy (keV)'\n");
         fprintf(gp_pipe,"set terminal wxt size 1000,600 title 'Monte Carlo transport'\n");
     }
 

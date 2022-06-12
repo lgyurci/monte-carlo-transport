@@ -6,6 +6,8 @@
 /tasks/*.eps
 /tasks/mtransport
 /tasks/tmp
+/tasks/1A.png
+/tasks/1B.png
 /savefile
 *.kate-swp
 /mtransport
