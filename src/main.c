@@ -26,6 +26,7 @@ struct tracingThreadArgs{
     double maxEnergy;
     struct vector *cylinder;
     int channelnum;
+    int iso;
 };
 
 
@@ -81,12 +82,17 @@ void *tracingThread(void* arg){
 
     double *crs = malloc(getX()*sizeof(double));
 
-    int colledParticles = 0;
-    int i = 0;
+    long colledParticles = 0;
+    long i = 0;
 
     for (; colledParticles < targs->stop_at_colls; i++){
         //struct vector direction = isotropicDirection();
-        struct vector direction = coneDirection(targs->cosalpha,vMult(targs->sourcePos,-1),targs->random);
+        struct vector direction;
+        if (targs->iso == 1){
+            direction = isotropicDirection(targs->random);
+        } else {
+            direction = coneDirection(targs->cosalpha,vMult(targs->sourcePos,-1),targs->random);
+        }
         double firstPoint = intersect_cylinder_out(targs->sourcePos,direction,targs->cylinder->x,targs->cylinder->y,targs->cylinder->z);
         if (firstPoint < inf){
             targs->detectorParticles++;
@@ -161,10 +167,16 @@ int main(int argc,char **argv){
 
     struct vector sourcePos = id.sourcePos;
 
-    double sinalpha = sqrt(cylinder.z*cylinder.z+(cylinder.x-cylinder.y)*(cylinder.x-cylinder.y))/vAbs(sourcePos);
+    double sinalpha = sqrt(cylinder.z*cylinder.z+(cylinder.x-cylinder.y)*(cylinder.x-cylinder.y)/4)/vAbs(sourcePos);
     double cosalpha = sqrt(1-sinalpha*sinalpha);
     double ang = 2*pi*(1-cosalpha);
     double particleMultiplier = 4*pi/ang;
+    int iso = 0;
+
+    if (sinalpha >= 1){
+        iso = 1;
+        particleMultiplier = 1;
+    }
 
     int *sumTChannels = malloc(sizeof(int)*channels);
 
@@ -195,6 +207,7 @@ int main(int argc,char **argv){
         targs[i].maxEnergy = maxenergy;
         targs[i].cylinder = &cylinder;
         targs[i].channelnum = channels;
+        targs[i].iso = iso;
         pthread_create(&(threads[i]),NULL,tracingThread,&(targs[i]));
     }
 
@@ -318,9 +331,11 @@ int main(int argc,char **argv){
     }
 
 
-    fprintf(gp_pipe,"pause mouse close\n");
-    fprintf(gp_pipe,"q\n");
-    pclose(gp_pipe);
+    if (id.realtime == 1){
+        fprintf(gp_pipe,"pause mouse close\n");
+        fprintf(gp_pipe,"q\n");
+        pclose(gp_pipe);
+    }
 
     free(sumTChannels);
     for (int i = 0; i < threadCount; i++){

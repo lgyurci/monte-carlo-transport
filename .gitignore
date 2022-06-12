@@ -3,6 +3,9 @@
 /docs/documentation.out
 /docs/documentation.log
 /docs/documentation.aux
+/tasks/*.eps
+/tasks/mtransport
+/tasks/tmp
 /savefile
 *.kate-swp
 /mtransport
