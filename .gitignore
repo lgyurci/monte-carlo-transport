@@ -2,6 +2,7 @@
 /docs/documentation.out
 /docs/documentation.log
 /docs/documentation.aux
+/tasks/savefile
 /tasks/*.eps
 /tasks/mtransport
 /tasks/tmp
