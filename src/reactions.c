@@ -175,7 +175,8 @@ void initReactions(double roo,double source,char *xcomfile){
         }
         sourceEnergy = source;
     } else {
-
+        printf("xcom file not found\n");
+        exit(0);
     }
 }
 
