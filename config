@@ -1,6 +1,6 @@
 Thread count: 20; #number of computing threads the program should run on (this is one less than the total threads)
 Channels: 1024;
-Stop when collisions reach: 3e6;
+Stop when collisions reach: 1e7;
 Real time plotting with gnuplot: 1;
 Density (g/cm3): 3.67;
 FWHM: 30;
