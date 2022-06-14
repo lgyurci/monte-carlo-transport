@@ -63,7 +63,7 @@ set output filename.'.eps'
 #boxxyerr
 
 #plot single
-p filename using 1:2 t "η_t_o_t" lw 2, filename using 1:4 t "η_i_n_t" lw 2
+p[][] filename using 1:2 t "η_t_o_t" lw 2, filename using 1:4 t "η_i_n_t" lw 2
 
 #plot multiple
 #p for [fn in filelist] fn u ($1):(sqrt(10**(($2)/10))) w lines lw 2

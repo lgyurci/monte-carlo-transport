@@ -20,6 +20,7 @@ struct tracingThreadArgs{
     double cosalpha;
     double sigma;
     struct vector sourcePos;
+    struct vector direction;
     int particlesTraced;
     int detectorParticles;
     double sumEnergy;
@@ -91,7 +92,8 @@ void *tracingThread(void* arg){
         if (targs->iso == 1){
             direction = isotropicDirection(targs->random);
         } else {
-            direction = coneDirection(targs->cosalpha,vMult(targs->sourcePos,-1),targs->random);
+            //direction = coneDirection(targs->cosalpha,vMult(targs->sourcePos,-1),targs->random);
+            direction = coneDirection(targs->cosalpha,targs->direction,targs->random);
         }
         double firstPoint = intersect_cylinder_out(targs->sourcePos,direction,targs->cylinder->x,targs->cylinder->y,targs->cylinder->z);
         if (firstPoint < inf){
@@ -114,6 +116,8 @@ void *tracingThread(void* arg){
 }
 
 int main(int argc,char **argv){
+
+
 
     struct input_data id = getInput(argc,argv);
 
@@ -189,6 +193,8 @@ int main(int argc,char **argv){
     gettimeofday(&ct,NULL);
     long peTi = ct.tv_sec * (int)1e6 + ct.tv_usec;
 
+    struct vector dir = vMult(reduceTo(sourcePos,1),-1);
+
     for (int i = 0; i < threadCount; i++){
         threadChannels[i] = malloc(sizeof(int)*channels);
         for (int j = 0; j < channels; j++){
@@ -204,6 +210,7 @@ int main(int argc,char **argv){
         targs[i].particlesTraced = 0;
         targs[i].detectorParticles = 0;
         targs[i].sumEnergy = 0;
+        targs[i].direction = dir;
         targs[i].maxEnergy = maxenergy;
         targs[i].cylinder = &cylinder;
         targs[i].channelnum = channels;
