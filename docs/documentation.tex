@@ -147,7 +147,8 @@ In task 1/B, it is also noticeable, that there are some additional peaks on the 
 The Compton edges on spectrum A and B are at 474 and 1112 keV, respectively, which are very close to the theoretical values - 476.68 and 1118 keV. This is well within the margin or error of me determining, where does the Compton edge start exactly, so I can say with confidence, that the algorithm in my program to calculate the Compton effect is working well.
 
 \subsection{Task 2}
-In task 2, we had to work according to the parameters of 1/A, but the position had to be changed linearly between (1,3.5,2) and (-4,-1.5,2). The calculated efficiencies are plotted on \autoref{fig:eff1}, which is overlapping with our expectation. Both values increase with the distance between the source and the detector being reduced.
+In task 2, we had to work according to the parameters of 1/A, but the position had to be changed linearly between (1,3.5,2) and (-4,-1.5,2). The calculated efficiencies are plotted on \autoref{fig:eff1}, which is overlapping with our expectation. As we get closer with the source to the detector, the total efficiency increases, for obvious reasons. The internal efficiency, however, is being reduced. The reason for this is that those particles, that reach the detector, in average, travel a larger path in the material if their equiangular source is further away. In an edge case, if the distance is infinite, the particles are parallel with each other, and they have an isotropic distribution on a plane, perpendicular to their momentum. If the source is close, on the other hand, the angle's distribution will be isotropic. In the edge case, if the source is on the surface of the detector, half of the particles will be going through it, but a lot of them will travel a very small path in the material.
+
 \begin{figure}[h!]
 \centering
 \includegraphics[width=\textwidth]{./2.eps}
@@ -155,12 +156,12 @@ In task 2, we had to work according to the parameters of 1/A, but the position h
 \label{fig:eff1}
 \end{figure}
 
-\newpage
-\phantom{asdasd}
-\newpage
+%\newpage
+%\phantom{asdasd}
+%\newpage
 
 \subsection{Task 3}
-Task 3 was very similar to task 2, but instead of the position, we had to linearly increase the energy from 400 keV to 4MeV. The other parameters in this task had to be set according to 1/B. The results are plotted on \autoref{fig:eff2}, and it is also according to our expectations - increasing the energy does reduce the efficiency, but after a while, it is almost constant.
+Task 3 was very similar to task 2, but instead of the position, we had to linearly increase the energy from 400 keV to 4MeV. The other parameters in this task had to be set according to 1/B. The results are plotted on \autoref{fig:eff2}, and it is also according to our expectations - increasing the energy does reduce the efficiency, but after a while, it is almost constant. This phenomenon is caused by the rapidly decreasing cross section of the photoelectric effect with energy, where a photon's energy is entirely absorbed, therefore making the detector have high efficiency. On higher energies, the leading reactions are mostly the Compton effect, and pair production, and both of these make it possible for the particle to escape after releasing a certain amount of energy, in addition to the total cross section being smaller. At 4 MeV, the photoelectric effect has a cross section 2 orders of magnitude smaller than the other two reactions. At 0.4 MeV, pair production cannot happen, and the other two have about the same cross section.
 
 \begin{figure}[h!]
 \centering
@@ -168,6 +169,8 @@ Task 3 was very similar to task 2, but instead of the position, we had to linear
 \caption{Task 3: Efficiencies versus energy}
 \label{fig:eff2}
 \end{figure}
+
+\newpage
 
 \section{Closing thoughts}
 This project was pretty interesting, especially because I has to pick the programming language I'm working with. I chose C because it's a beautiful language, and gives you very fine-grained control over low-level things, like memory management. Matlab, in my opinion, is a cluttered, bloated dumpster fire, and I have no idea how did it become the industry standard in some places, so I tried to avoid it by any cost.
