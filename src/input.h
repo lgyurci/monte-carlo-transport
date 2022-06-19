@@ -18,6 +18,7 @@ struct input_data{
     double sourceEnergy;
     double sigma;
     char gnuplotExecutable[255];
+    char gnuplotTerminalType[63];
     char xcomLocation[255];
     char savefile[255];
 };

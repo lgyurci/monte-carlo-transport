@@ -166,7 +166,7 @@ int main(int argc,char **argv){
         fprintf(gp_pipe,"set logscale y\n");
         fprintf(gp_pipe,"set ylabel 'Counts'\n");
         fprintf(gp_pipe,"set xlabel 'Energy (keV)'\n");
-        fprintf(gp_pipe,"set terminal wxt size 1000,600 title 'Monte Carlo transport'\n");
+        fprintf(gp_pipe,"set terminal %s size 1000,600 title 'Monte Carlo transport'\n", id.gnuplotTerminalType);
     }
 
     struct vector sourcePos = id.sourcePos;
